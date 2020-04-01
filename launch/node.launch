@@ -3,8 +3,14 @@
 	<arg name="skeleton_filename"  default="$(env HOME)/test.skeleton"/>
 	<arg name="camera_frame_id"  default="camera_rgb_optical_frame"/>
 
+	<node pkg="tf" 
+          type="static_transform_publisher" 
+          name="link1_broadcaster" 
+          args="0 0 0 -0.7071 0 0 0.7071 temp_link $(arg camera_frame_id) 100" />
+
 	<node name="hri_costmap_node" pkg="hri_costmap" type="node" output="screen" required="true">
 		<param name="skeleton_filename" type="string" value="$(arg skeleton_filename)" />
-		<param name="camera_frame_id" type="string" value="$(arg camera_frame_id)" />
+		<!-- <param name="camera_frame_id" type="string" value="$(arg camera_frame_id)" /> -->
+		<param name="camera_frame_id" type="string" value="temp_link" />
 	</node>
 </launch>

@@ -16,6 +16,12 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf2_msgs
   tf2_ros
+  pcl_ros
+  shape_msgs
+  moveit_msgs
+  moveit_core
+  moveit_ros_planning_interface
+  moveit_ros_move_group
 )
 
 ## System dependencies are found with CMake's conventions
@@ -139,12 +145,16 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/node.cpp)
+add_executable(${PROJECT_NAME}_fake_pointcloud src/fake_pointcloud.cpp)
+add_executable(${PROJECT_NAME}_costmap_viz src/costmap_viz.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+set_target_properties(${PROJECT_NAME}_fake_pointcloud PROPERTIES OUTPUT_NAME fake_pointcloud PREFIX "")
+set_target_properties(${PROJECT_NAME}_costmap_viz PROPERTIES OUTPUT_NAME costmap_viz PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -152,6 +162,12 @@ set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX ""
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_fake_pointcloud
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_costmap_viz
   ${catkin_LIBRARIES}
 )
 

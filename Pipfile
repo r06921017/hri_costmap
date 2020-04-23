@@ -9,6 +9,12 @@ verify_ssl = true
 pygame = "*"
 numpy = "*"
 gym = "*"
+scipy = "*"
+pymdptoolbox = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.6"
+
+[pipenv]
+allow_prereleases = true

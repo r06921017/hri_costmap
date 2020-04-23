@@ -37,3 +37,6 @@ class MaxEntIRL:
 
     def _compute_state_visitation_frequencies(self):
         pass
+
+if __name__ == '__main__':
+    pass

@@ -1,11 +1,12 @@
 import time
 
-from gym import Env, spaces
+import gym
 import matplotlib.pyplot as plt
 from mdptoolbox.mdp import ValueIteration
 import numpy as np
 import pygame
 from scipy.sparse import csr_matrix
+
 
 class Colors:
     BLACK = (0, 0, 0)
@@ -18,7 +19,7 @@ class Colors:
     CYAN = (0, 255, 255)
 
 
-class GridWorld(Env):
+class GridWorld(gym.Env):
     ''' Pygame-based grid world.'''
     enum2feature = {
         0: 'empty',
@@ -39,12 +40,14 @@ class GridWorld(Env):
         [0, 1],  # down
         [0, -1], # up
     ]
+    metadata = {'render.modes': ['human',]}  # for gym.Env
 
     def __init__(self,
                  init_pos,
                  goal_pos,
-                 human_pos,
                  grid,
+                 human_pos=None,
+                 human_radius=2.5,
                  action_success_rate=1.,
                  render=True,
                  cell_size_px=80,
@@ -54,20 +57,24 @@ class GridWorld(Env):
         self.init_pos = np.array(init_pos, dtype=int)
         self.goal_pos = np.array(goal_pos, dtype=int)
         self.human_pos = np.array(human_pos, dtype=int) if human_pos else None
+        self.human_radius = human_radius
         self.action_success_rate = action_success_rate
 
         # game state
         self.grid = np.copy(self.init_grid)
-        self.agent_pos = np.array(self.init_pos, dtype=int)
+        self.agent_state = self._pos2state(self.init_pos)
+        self.goal_state = self._pos2state(self.goal_pos)
         self.R = self._construct_reward_fn()
         self.T = self._construct_transition_fn()
 
         # sanity check
         assert self._valid_pos(self.init_pos)
         assert self._valid_pos(self.goal_pos)
-        assert self._valid_pos(self.goal_pos)
-        assert self._valid_pos(self.human_pos) if self.human_pos is not None else True
-        assert self.action_success_rate >= 0 and self.action_success_rate <= 1
+        assert (self._valid_pos(self.human_pos) if
+                self.human_pos is not None else True)
+        assert self.human_radius > 0.
+        assert (self.action_success_rate >= 0 and
+                self.action_success_rate <= 1)
 
         # pygame
         self.do_render = render
@@ -88,7 +95,10 @@ class GridWorld(Env):
             )
             self.render()
 
-    def render(self, render_mode='human'):
+    def render(self, mode='human'):
+        if mode != 'human':
+            super(GridWorld, self).render(mode=mode)
+
         if pygame.display.get_init():
             self.surface.fill(Colors.BLACK)
             # grid
@@ -126,52 +136,56 @@ class GridWorld(Env):
             pygame.draw.circle(
                 self.surface,
                 color,
-                self._get_position_center(*self.agent_pos),
+                self._get_position_center(*self._state2pos(self.agent_state)),
                 int(self.cell_size / 2))
 
             pygame.display.flip()
 
     def reset(self):
         np.copyto(dst=self.grid, src=self.init_grid)
-        np.copyto(dst=self.agent_pos, src=self.init_pos)
+        self.agent_state = self._pos2state(self.init_pos)
         if self.do_render:
             self.render()
 
-        obs = self._pos2state(self.agent_pos)
+        obs = self.agent_state
         reward = self._get_reward()
         done = self._is_done()
         info = self._get_info()
         return obs, reward, done, info
 
-    def step(self, action):
-        sprime_prob = self.T[action][
-            self._pos2state(self.agent_pos)].toarray().flatten()
-        sprime = np.random.choice(self.observation_space().n, p=sprime_prob)
-        self.agent_pos = self._state2pos(sprime)
-        self.render()
+    def close(self):
+        if pygame.display.get_init():
+            pygame.display.quit()
+        pygame.quit()
 
-        obs = self._pos2state(self.agent_pos)
+    def step(self, action):
+        sprime_prob = self.T[action][self.agent_state].toarray().flatten()
+        self.agent_state = np.random.choice(self.grid.size, p=sprime_prob)
+        if self.do_render:
+            self.render()
+
+        obs = self.agent_state
         reward = self._get_reward()
         done = self._is_done()
         info = self._get_info()
         return obs, reward, done, info
 
     def action_space(self):
-        return spaces.Discrete(len(GridWorld.action2delta))
+        return gym.spaces.Discrete(len(GridWorld.action2delta))
 
     def observation_space(self):
-        return spaces.Discrete(self.grid.size)
+        return gym.spaces.Discrete(self.grid.size)
 
     def _get_reward(self):
-        return self.R[self._pos2state(self.agent_pos)]
+        return self.R[self.agent_state]
 
     def _is_done(self):
-        return np.all(self.agent_pos == self.goal_pos)
+        return self.agent_state == self.goal_state
 
     def _get_info(self):
         info_dict = dict(
             grid=self.grid,
-            agent_pos=self.agent_pos,
+            agent_pos=self._state2pos(self.agent_state),
             goal_pos=self.goal_pos,
             human_pos=self.human_pos)
         return info_dict
@@ -203,16 +217,15 @@ class GridWorld(Env):
                 R[s] += -10
             # human proximity penalty
             s_pos = self._state2pos(s)
-            if np.linalg.norm(s_pos - self.human_pos) < 2.5:
+            if np.linalg.norm(s_pos - self.human_pos) < self.human_radius:
                 R[s] += -10
-
         # goal reward
-        R[self._pos2state(self.goal_pos)] = 10
+        R[self.goal_state] = 10
 
         return R
 
     def _construct_transition_fn(self):
-        # T[a][s, s'] implemented as a list of csr matrices
+        # T[a][s, s'] implemented as a length |A| list of sparse SxS matrices
         T = [csr_matrix((self.grid.size, self.grid.size), dtype=np.float)
              for _ in range(self.action_space().n)]
         
@@ -222,39 +235,30 @@ class GridWorld(Env):
                     # state data
                     s_pos = np.array([i, j])
                     s = self._pos2state(s_pos)
+
+                    # get valid neighbors (current state is also valid)
+                    neighbors = [s_pos + d for d in
+                        GridWorld.action2delta + [[0, 0]]]
+                    valid_neighbors = [self._pos2state(n) for n in neighbors
+                        if self._valid_pos(n)]
+
+                    # if sprime_pos is not valid, clip to current state
                     sprime_pos = s_pos + delta
-
-                    # deterministic transitions
-                    if self.action_success_rate == 1:
-                        # if successful transition is not valid, clip to current state
-                        if self._valid_pos(sprime_pos):
-                            T[a][s, self._pos2state(sprime_pos)] = 1
-                        else:
-                            T[a][s, s] = 1
-
-                    # stochastic transitions
+                    if self._valid_pos(sprime_pos):
+                        success_state = self._pos2state(sprime_pos)
                     else:
-                        # get valid neighbors
-                        neighbors = [s_pos + d for d in GridWorld.action2delta + [[0, 0]]]
-                        valid_neighbors = [self._pos2state(n) for n in neighbors
-                            if self._valid_pos(n)]
+                        success_state = s
 
-                        # if successful transition is not valid, clip to current state
-                        if self._valid_pos(sprime_pos):
-                            success_state = self._pos2state(sprime_pos)
+                    # uniform weighting of all other valid transitions
+                    fail_prob = (1 - self.action_success_rate)
+                    if len(valid_neighbors) > 1:
+                        fail_prob /= len(valid_neighbors) - 1
+
+                    for n in valid_neighbors:
+                        if n == success_state:
+                            T[a][s, success_state] = self.action_success_rate
                         else:
-                            success_state = s
-
-                        # uniform weighting of all other valid transitions
-                        fail_prob = (1 - self.action_success_rate)
-                        if len(valid_neighbors) > 1:
-                            fail_prob /= len(valid_neighbors) - 1
-
-                        for n in valid_neighbors:
-                            if n == success_state:
-                                T[a][s, success_state] = self.action_success_rate
-                            else:
-                                T[a][s, n] = fail_prob
+                            T[a][s, n] = fail_prob
 
         return T
 
@@ -265,35 +269,35 @@ class GridWorld(Env):
 if __name__ == '__main__':
     N = 10
     grid = np.zeros((N, N), dtype=int)
-    grid[:N-1, N-1] = 1
+    grid[:N-1, N-1] = 1  # Add obstacles
     env = GridWorld(
         init_pos=(0, 0),
         goal_pos=(N-1, N-1),
         human_pos=(4, 4),
         render=True,
-        action_success_rate=0.9,
+        action_success_rate=1,
         grid=grid)
     
     gamma = 0.9
     vi = ValueIteration(env.T, env.R, gamma)
     vi.run()
     
-    pi = vi.policy
-    obs, rew, done, info = env.reset()
-    while not done:
-        act = pi[obs]
-        obs, rew, done, info = env.step(act)
-        time.sleep(0.5)
+    # pi = vi.policy
+    # obs, rew, done, info = env.reset()
+    # while not done:
+    #     act = pi[obs]
+    #     obs, rew, done, info = env.step(act)
+    #     time.sleep(0.5)
 
-    # R = env.R.reshape((N, N)).T
-    # V = np.asarray(vi.V).reshape((N, N)).T
+    R = env.R.reshape((N, N)).T
+    V = np.asarray(vi.V).reshape((N, N)).T
     
-    # fig, (ax1, ax2) = plt.subplots(
-    #     1, 2, subplot_kw={'xticklabels': [], 'yticklabels': []})
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, subplot_kw={'xticklabels': [], 'yticklabels': []})
     
-    # ax1.set_title("Reward (Ground truth)")
-    # ax1.matshow(R, cmap=plt.cm.Reds)
+    ax1.set_title("Reward (Ground truth)")
+    ax1.matshow(R, cmap=plt.cm.Reds)
 
-    # ax2.set_title("Value Function")
-    # ax2.matshow(V, cmap=plt.cm.Blues)
-    # plt.show()
+    ax2.set_title("Value Function")
+    ax2.matshow(V, cmap=plt.cm.Blues)
+    plt.show()

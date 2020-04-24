@@ -3,7 +3,7 @@ from collections import namedtuple
 import numpy as np
 
 
-transition = namedtuple('transition', ('obs', 'act', 'new_obs'))
+transition = namedtuple('transition', ('obs', 'act', 'next_obs', 'rew'))
 
 class Dataset:
     def __init__(self, maxlen):
@@ -15,7 +15,7 @@ class Dataset:
         self.data.append(t)
 
     def __iter__(self):
-        for t in data:
+        for t in self.data:
             yield t
 
     def __len__(self):

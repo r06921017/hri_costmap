@@ -1,10 +1,12 @@
 from itertools import product
 
-import numpy as np
+import matplotlib.pyplot as plt
 from mdptoolbox.mdp import ValueIteration
+import numpy as np
 
 from dataset import Dataset, transition
 from grid_world import GridWorld
+
 
 class MaxEntIRL:
     '''Maxumum Entropy Inverse Reinforcement Learning.'''
@@ -110,13 +112,14 @@ class MaxEntIRL:
 
 if __name__ == '__main__':
     # env
-    N = 10
+    N = 5
     grid = np.zeros((N, N), dtype=int)
     grid[:N-1, N-1] = 1  # Add obstacles
     env = GridWorld(
         init_pos=(0, 0),
         goal_pos=(N-1, N-1),
-        human_pos=(4, 4),
+        human_pos=(N-1, 0),
+        human_radius=1.5,
         grid=grid,
         action_success_rate=1,
         render=False
@@ -128,7 +131,22 @@ if __name__ == '__main__':
     vi.run()
     pi = vi.policy
 
-    dataset = Dataset(maxlen=18)
+    R = env.R.reshape((N, N)).T
+    V = np.asarray(vi.V).reshape((N, N)).T
+    
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, subplot_kw={'xticklabels': [], 'yticklabels': []})
+    
+    ax1.set_title("Reward (Ground truth)")
+    ax1.matshow(R, cmap=plt.cm.Reds)
+
+    ax2.set_title("Value Function")
+    ax2.matshow(V, cmap=plt.cm.Blues)
+    plt.show()
+    import pdb; pdb.set_trace()
+
+    # TODO: stochastic policy generation + sampling
+    dataset = Dataset(maxlen=8)
     t = []
     obs, rew, done, info = env.reset()
     while not done:
@@ -137,10 +155,17 @@ if __name__ == '__main__':
         t.append(transition(obs=obs, act=act, next_obs=next_obs, rew=rew))
         obs = next_obs
     dataset.append(t)
+    import pdb; pdb.set_trace()
 
     # phi
     phi = np.eye(env.observation_space().n, dtype=np.float)
 
     # IRL
-    me_irl = MaxEntIRL(env, dataset, phi)
+    me_irl = MaxEntIRL(
+        env,
+        dataset,
+        phi,
+        max_iter=20)
     Rprime = me_irl.train()
+
+    import pdb; pdb.set_trace()

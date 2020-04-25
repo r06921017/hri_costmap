@@ -1,8 +1,6 @@
 import time
 
 import gym
-import matplotlib.pyplot as plt
-from mdptoolbox.mdp import ValueIteration
 import numpy as np
 import pygame
 from scipy.sparse import csr_matrix
@@ -109,7 +107,7 @@ class GridWorld(gym.Env):
                         self._get_position_topleft(i, j)[1],
                         self.cell_size,
                         self.cell_size)
-                    feature = GridWorld.enum2feature[grid[i, j]]
+                    feature = GridWorld.enum2feature[self.grid[i, j]]
                     color = GridWorld.feature2color[feature]
                     pygame.draw.rect(self.surface, color, rect)
 
@@ -265,39 +263,3 @@ class GridWorld(gym.Env):
     def _valid_pos(self, coords):
         return (coords[0] >= 0 and coords[0] < self.grid.shape[0] and
                 coords[1] >= 0 and coords[1] < self.grid.shape[1])
-
-if __name__ == '__main__':
-    N = 10
-    grid = np.zeros((N, N), dtype=int)
-    grid[:N-1, N-1] = 1  # Add obstacles
-    env = GridWorld(
-        init_pos=(0, 0),
-        goal_pos=(N-1, N-1),
-        human_pos=(4, 4),
-        render=True,
-        action_success_rate=1,
-        grid=grid)
-    
-    gamma = 0.9
-    vi = ValueIteration(env.T, env.R, gamma)
-    vi.run()
-    
-    # pi = vi.policy
-    # obs, rew, done, info = env.reset()
-    # while not done:
-    #     act = pi[obs]
-    #     obs, rew, done, info = env.step(act)
-    #     time.sleep(0.5)
-
-    R = env.R.reshape((N, N)).T
-    V = np.asarray(vi.V).reshape((N, N)).T
-    
-    fig, (ax1, ax2) = plt.subplots(
-        1, 2, subplot_kw={'xticklabels': [], 'yticklabels': []})
-    
-    ax1.set_title("Reward (Ground truth)")
-    ax1.matshow(R, cmap=plt.cm.Reds)
-
-    ax2.set_title("Value Function")
-    ax2.matshow(V, cmap=plt.cm.Blues)
-    plt.show()

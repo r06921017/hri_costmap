@@ -82,7 +82,7 @@ class MaxEntIRL:
         # Backward pass: compute state partition
         s_part = np.zeros(S, dtype=np.float)
         a_part = np.zeros((S, A), dtype=np.float)
-        s_part[env.goal_state] = 1.
+        s_part[self.env.goal_state] = 1.
 
         for i in range(2 * H):
             a_part[:] = 0.
@@ -109,6 +109,7 @@ class MaxEntIRL:
 
         svf = np.sum(stvf, axis=1)
         return svf
+<<<<<<< HEAD
 
 if __name__ == '__main__':
     # env
@@ -169,3 +170,5 @@ if __name__ == '__main__':
     Rprime = me_irl.train()
 
     # import pdb; pdb.set_trace()
+=======
+>>>>>>> Separate tests and utils

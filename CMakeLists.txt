@@ -147,6 +147,8 @@ include_directories(
 add_executable(${PROJECT_NAME}_node src/node.cpp)
 add_executable(${PROJECT_NAME}_fake_pointcloud src/fake_pointcloud.cpp)
 add_executable(${PROJECT_NAME}_costmap_viz src/costmap_viz.cpp)
+add_executable(${PROJECT_NAME}_costmap_marker src/costmap_marker.cpp)
+add_executable(${PROJECT_NAME}_discretize_env src/discretize_env.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,6 +157,8 @@ add_executable(${PROJECT_NAME}_costmap_viz src/costmap_viz.cpp)
 set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 set_target_properties(${PROJECT_NAME}_fake_pointcloud PROPERTIES OUTPUT_NAME fake_pointcloud PREFIX "")
 set_target_properties(${PROJECT_NAME}_costmap_viz PROPERTIES OUTPUT_NAME costmap_viz PREFIX "")
+set_target_properties(${PROJECT_NAME}_costmap_marker PROPERTIES OUTPUT_NAME costmap_marker PREFIX "")
+set_target_properties(${PROJECT_NAME}_discretize_env PROPERTIES OUTPUT_NAME discretize_env PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -168,6 +172,12 @@ target_link_libraries(${PROJECT_NAME}_fake_pointcloud
   ${catkin_LIBRARIES}
 )
 target_link_libraries(${PROJECT_NAME}_costmap_viz
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_costmap_marker
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_discretize_env
   ${catkin_LIBRARIES}
 )
 

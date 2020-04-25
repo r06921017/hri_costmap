@@ -47,9 +47,9 @@ int main(int argc, char** argv)
 	string camera_frame_id = p_nh.param(string("camera_frame_id"), string("camera"));
 	
 	static tf2_ros::TransformBroadcaster br;
-	ros::Publisher skeleton_marker_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/hri_costmap_viz", 10);
+	ros::Publisher skeleton_marker_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/hri_joints", 10);
 
-	vector<geometry_msgs::TransformStamped> body_transforms(50); //25 per person and maximum 2 people in a frame
+	vector<geometry_msgs::TransformStamped> body_transforms(50);  // 25 per person and maximum 2 people in a frame
 	visualization_msgs::MarkerArray marker_array;
 	
 	for(int i = 0; i < 2; i ++)

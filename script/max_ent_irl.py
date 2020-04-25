@@ -47,7 +47,7 @@ class MaxEntIRL:
 
             # convergence critereon
             delta = np.max(np.abs(weights - prev_weights))
-            print(f"iteration {i}, delta={delta}")
+            print "iteration {0}, delta={1}".format(i, delta)
             if delta < self.eps:
                 break
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     ax2.set_title("Value Function")
     ax2.matshow(V, cmap=plt.cm.Blues)
     plt.show()
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     # TODO: stochastic policy generation + sampling
     dataset = Dataset(maxlen=8)
@@ -155,7 +155,7 @@ if __name__ == '__main__':
         t.append(transition(obs=obs, act=act, next_obs=next_obs, rew=rew))
         obs = next_obs
     dataset.append(t)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     # phi
     phi = np.eye(env.observation_space().n, dtype=np.float)
@@ -168,4 +168,4 @@ if __name__ == '__main__':
         max_iter=20)
     Rprime = me_irl.train()
 
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()

@@ -20,6 +20,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <tf/transform_listener.h>
 
 #include <cassert>
 #include <cstdio>
@@ -42,7 +43,7 @@ int num_of_people = 2;
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "hri_costmap_node");
+	ros::init(argc, argv, "hri_costmap_viz");
 	ros::NodeHandle nh;
 	ros::NodeHandle p_nh("~");
 

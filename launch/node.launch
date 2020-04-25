@@ -10,7 +10,8 @@
 
 	<node name="hri_costmap_node" pkg="hri_costmap" type="node" output="screen" required="true">
 		<param name="skeleton_filename" type="string" value="$(arg skeleton_filename)" />
-		<!-- <param name="camera_frame_id" type="string" value="$(arg camera_frame_id)" /> -->
 		<param name="camera_frame_id" type="string" value="temp_link" />
 	</node>
+
+	<!-- <node name="hri_costmap_costmap_marker" pkg="hri_costmap" type="costmap_marker" output="screen" required="true"/> -->
 </launch>

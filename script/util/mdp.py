@@ -1,5 +1,4 @@
 import mdptoolbox.mdp as mdp
-import numpy as np
 
 
 def value_iteration(T, R, gamma=0.99):

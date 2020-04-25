@@ -43,7 +43,7 @@ class EpsGreedyPolicy(Policy):
         assert (isinstance(self.mdp_algo, mdp.ValueIteration) or
                 isinstance(self.mdp_algo, mdp.QLearning) or
                 isinstance(self.mdp_algo, mdp.PolicyIteration))
-        assert self.eps >= 0 and self.eps <= 1
+        assert self.epsilon >= 0 and self.epsilon <= 1
 
         self.policy = np.asarray(mdp_algo.policy)
         self.eps = self.epsilon

@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-from mdptoolbox.mdp import ValueIteration
 import numpy as np
 
 from dataset import Dataset, transition
 from grid_world import GridWorld
 from max_ent_irl import MaxEntIRL
 from util.plotting import plot_grid_map
+from value_iter import value_iteration
 
 
 def test_gridworld_maxent_irl():
@@ -24,9 +24,7 @@ def test_gridworld_maxent_irl():
     )
 
     # dataset
-    gamma = 0.9
-    vi = ValueIteration(env.T, env.R, gamma)
-    vi.run()
+    vi = value_iteration(env.T, env.R, gamma=0.9)
     pi = vi.policy
 
     R = env.R.reshape((N, N)).T

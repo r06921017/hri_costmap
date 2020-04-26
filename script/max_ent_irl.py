@@ -109,7 +109,6 @@ class MaxEntIRL:
 
         svf = np.sum(stvf, axis=1)
         return svf
-<<<<<<< HEAD
 
 if __name__ == '__main__':
     # env
@@ -170,5 +169,3 @@ if __name__ == '__main__':
     Rprime = me_irl.train()
 
     # import pdb; pdb.set_trace()
-=======
->>>>>>> Separate tests and utils

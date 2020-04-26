@@ -52,13 +52,13 @@ def test_gridworld_q_learning():
     policy = BoltzmannPolicy(env.action_space(), ql, tau=0.3)
 
     # TODO: replace with (stochastic?) policy viz
-    import pdb; pdb.set_trace()
     obs, rew, done, info = env.reset()
     while not done:
         act = policy.get_action(obs)
         obs, rew, done, info = env.step(act)
         time.sleep(0.2)
 
+    import pdb; pdb.set_trace()
     env.close()
 
 

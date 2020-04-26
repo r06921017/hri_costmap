@@ -8,7 +8,8 @@ def value_iteration(T, R, gamma=0.99):
     return vi
 
 def q_learning(T, R, gamma=0.99):
-    ql = mdp.QLearning(T, R, gamma)
+    ql = mdp.QLearning(transitions=T, reward=R, discount=gamma)
+    ql.setVerbose()
     ql.run()
 
     return ql

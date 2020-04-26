@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,21 +13,21 @@ def plot_grid_map(data, title, cmap=plt.cm.Blues):
 
     return fig
 
-def plot_policy(grid, policy, title, V=None, cmap=plt.cm.Blues):
+def plot_policy(grid, policy, title, values=None, cmap=plt.cm.Blues):
     arrows = [
-        '→',
-        '←',
-        '↓',
-        '↑',
+        u'→',
+        u'←',
+        u'↓',
+        u'↑',
     ]
 
-    if V is None:
-        V = np.zeros_like(grid)
+    if values is None:
+        values = np.zeros_like(grid)
 
     fig, ax = plt.subplots(
         subplot_kw={'xticklabels': [], 'yticklabels': []})
 
-    ax.matshow(V, cmap=cmap)
+    ax.matshow(values, cmap=cmap)
     for i in range(grid.shape[0]):
         for j in range(grid.shape[1]):
             act = policy.get_action(np.ravel_multi_index([j, i], grid.shape))

@@ -2,13 +2,15 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import mdptoolbox.mdp as mdp
-from scipy.special import softmax
 
 
 class Policy(ABC):
     @abstractmethod
     def get_action(self, obs):
         raise NotImplementedError
+
+    def reset(self):
+        pass
 
 class RandomPolicy(Policy):
     def __init__(self, action_space):
@@ -60,6 +62,41 @@ class EpsGreedyPolicy(Policy):
     def reset(self):
         self.eps = self.epsilon
 
+class StochasticGreedyPolicy(Policy):
+    def __init__(self, action_space, mdp_algo, transition):
+        self.action_space = action_space
+        self.mdp_algo = mdp_algo
+        self.transition = transition
+
+        assert (isinstance(self.mdp_algo, mdp.ValueIteration) or
+                isinstance(self.mdp_algo, mdp.QLearning) or
+                isinstance(self.mdp_algo, mdp.PolicyIteration))
+
+        self.V = np.asarray(self.mdp_algo.V)
+        self._generate_policy()
+
+    def _generate_policy(self):
+        self.pi = np.zeros(
+            (self.V.size, self.action_space.n), dtype=np.float)
+        for s in range(self.V.size):
+            act_value_exp = []
+            for a in range(self.action_space.n):
+                sprime_dist = self.transition[a][s].toarray().flatten()
+                act_value = np.sum(self.V * sprime_dist)
+                act_value_exp.append(act_value)
+            act_value_exp = np.array(act_value_exp)
+            act_prob = act_value_exp - np.min(act_value_exp)
+            act_prob /= np.sum(act_prob)
+
+            self.pi[s, :] = act_prob
+
+
+    def get_action(self, obs):
+        act_prob = self.pi[obs, :]
+        act = np.random.choice(self.action_space.n, p=act_prob)
+
+        return act
+
 class BoltzmannPolicy(Policy):
     def __init__(self, action_space, ql_algo, tau=0.1, anneal_rate=1):
         self.action_space = action_space
@@ -69,11 +106,12 @@ class BoltzmannPolicy(Policy):
 
         assert isinstance(self.ql_algo, mdp.QLearning)
 
-        self.Q = ql_algo.Q
+        self.Q = np.copy(ql_algo.Q)
         self.t = self.tau
 
     def get_action(self, obs):
-        act_prob = softmax(self.Q[obs] / self.t)
+        act_exp = np.exp(self.Q[obs] - np.max(self.Q[obs]))
+        act_prob = act_exp / np.sum(act_exp)
         act = np.random.choice(self.action_space.n, p=act_prob)
 
         self.t *= self.anneal_rate

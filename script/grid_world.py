@@ -210,6 +210,9 @@ class GridWorld(gym.Env):
         R = np.zeros(self.grid.size)
 
         for s, v in zip(range(self.grid.size), self.grid.flat):
+            # nongoal penalty
+            if GridWorld.enum2feature[v] == 'empty':
+                R[s] += -1
             # obstacle penalty
             if GridWorld.enum2feature[v] == 'obstacle':
                 R[s] += -10

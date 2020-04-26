@@ -10,6 +10,8 @@ from util.policy import EpsGreedyPolicy, BoltzmannPolicy
 
 
 def test_gridworld_value_iteration():
+    np.random.set_seed(0)
+
     N = 10
     grid = np.zeros((N, N), dtype=int)
     grid[:N-1, N-1] = 1  # Add obstacles
@@ -36,6 +38,8 @@ def test_gridworld_value_iteration():
     env.close()
 
 def test_gridworld_q_learning():
+    np.random.set_seed(0)
+
     N = 5
     grid = np.zeros((N, N), dtype=int)
     grid[:N-1, N-1] = 1  # Add obstacles
@@ -49,16 +53,14 @@ def test_gridworld_q_learning():
 
     ql = mdp.q_learning(env.T, env.R, gamma=0.99)
     ql.run()
-    policy = BoltzmannPolicy(env.action_space(), ql, tau=0.3)
+    policy = BoltzmannPolicy(env.action_space(), ql, tau=0.1)
 
-    # TODO: replace with (stochastic?) policy viz
     obs, rew, done, info = env.reset()
     while not done:
         act = policy.get_action(obs)
         obs, rew, done, info = env.step(act)
         time.sleep(0.2)
 
-    import pdb; pdb.set_trace()
     env.close()
 
 

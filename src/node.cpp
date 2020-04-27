@@ -83,6 +83,7 @@ int main(int argc, char** argv)
 		}
 
 	ROS_INFO("Opening file %s", skeleton_filename.c_str());
+	p_nh.setParam("filename", skeleton_filename.c_str());
 		
 	ifstream skeleton_file(skeleton_filename);
 	if(!skeleton_file.is_open())
@@ -104,8 +105,13 @@ int main(int argc, char** argv)
 			return -1;
 		}
 
+		p_nh.setParam("frame_count", frame_count);
+
 		for(int frame = 0; frame < frame_count; frame ++)
 		{
+			ROS_INFO("frame: %d", frame);
+			p_nh.setParam("cur_frame", frame);
+
 			int body_count;
 			skeleton_file >> body_count; // no. of observed skeletons in current frame
 			
@@ -151,12 +157,20 @@ int main(int argc, char** argv)
 
 						body_transforms[body_num*25 + joint_num].header.stamp = t;
 						
-						ROS_INFO("TRACKING JOINT %d of SKELETON %d in FRAME %d as %.3f %.3f %.3f %.3f %.3f %.3f %.3f",joint_num, body_num, frame, x, y, z, orientationX, orientationY, orientationZ, orientationW);
+						// ROS_INFO("TRACKING JOINT %d of SKELETON %d in FRAME %d as %.3f %.3f %.3f %.3f %.3f %.3f %.3f",joint_num, body_num, frame, x, y, z, orientationX, orientationY, orientationZ, orientationW);
 					}
 				}
 			}
 			br.sendTransform(body_transforms);
 			skeleton_marker_array_pub.publish(marker_array);
+
+			bool received = false;
+			while (received == false)
+			{
+				p_nh.getParam("/hri_costmap_node/received", received);
+				continue;
+			}
+			p_nh.setParam("/hri_costmap_node/received", false);
 			r.sleep();
 		}
 	}

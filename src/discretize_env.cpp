@@ -65,10 +65,6 @@ int main(int argc, char** argv)
                 tf_listener.waitForTransform(tar_tf, src_tf, now, ros::Duration(1.0));
                 tf_listener.lookupTransform(tar_tf, src_tf, now, body_tfs[joint_id]);
 
-                ROS_INFO("%s, x: %f", joint_names[needed_joint[idx]].c_str(), body_tfs[joint_id].getOrigin().x());
-                ROS_INFO("%s, y: %f", joint_names[needed_joint[idx]].c_str(), body_tfs[joint_id].getOrigin().y());
-                ROS_INFO("%s, z: %f", joint_names[needed_joint[idx]].c_str(), body_tfs[joint_id].getOrigin().z());
-
                 geometry_msgs::PoseStamped tmp_joint;
                 tmp_joint.header.stamp = now;
                 tmp_joint.header.frame_id = tar_tf;

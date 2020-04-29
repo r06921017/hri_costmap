@@ -17,12 +17,12 @@ def test_gridworld_maxent_irl():
     # env
     N = 5
     grid = np.zeros((N, N), dtype=int)
-    grid[:N-1, N-1] = 1  # Add obstacles
+    # grid[:N-1, N-1] = 1  # Add obstacles
     env = GridWorld(
         init_pos=(0, 0),
         goal_pos=(N-1, N-1),
         human_pos=(N-1, 0),
-        human_radius=1.5,
+        human_radius=2.5,
         grid=grid,
         action_success_rate=1,
         render=False,
@@ -33,12 +33,22 @@ def test_gridworld_maxent_irl():
     # policy = BoltzmannPolicy(env.action_space(), ql, tau=1)
     vi = value_iteration(env.T, env.R, gamma=0.99)
     # policy = EpsGreedyPolicy(env.action_space(), vi, epsilon=0.1)
-    # policy = StochasticGreedyPolicy(env.action_space(), vi, env.T)
-    policy = GreedyPolicy(env.action_space(), vi)
-    plot_policy(grid, policy, "Policy", values=np.asarray(vi.V).reshape((5,5)).T, cmap=plt.cm.Blues)
-    plt.show()
+    policy = StochasticGreedyPolicy(env.action_space(), vi, env.T)
+    # policy = GreedyPolicy(env.action_space(), vi)
 
-    num_trajectories = 20
+    V = np.asarray(vi.V).reshape((N, N)).T
+    R = env.R.reshape((N, N)).T
+    # plot_grid_map(R, "Reward Function", cmap=plt.cm.Reds)
+    # plot_grid_map(V, "Value Function", cmap=plt.cm.Blues)
+    # plot_policy(
+    #     grid,
+    #     policy,
+    #     "Policy",
+    #     values=np.asarray(vi.V).reshape((5,5)).T,
+    #     cmap=plt.cm.Blues)
+    # plt.show()
+
+    num_trajectories = 200
     maxlen = 15
     dataset = Dataset(maxlen=maxlen)
 
@@ -62,7 +72,8 @@ def test_gridworld_maxent_irl():
         dataset.append(t)
 
     # phi
-    phi = np.eye(env.observation_space().n, dtype=np.float)
+    phi = [env._feature_map(s) for s in range(env.observation_space().n)]
+    phi = np.array(phi)
 
     # IRL
     me_irl = MaxEntIRL(
@@ -72,15 +83,15 @@ def test_gridworld_maxent_irl():
         goal_states=[env.goal_state],
         dataset=dataset,
         feature_map=phi,
-        max_iter=5)
+        max_iter=10,
+        anneal_rate=0.9)
     Rprime = me_irl.train()
     Rprime = Rprime.reshape((N, N)).T
 
     # plot results
-    R = env.R.reshape((N, N)).T
 
     plot_grid_map(R, "Reward (Ground Truth)", cmap=plt.cm.Reds)
-    plot_grid_map(Rprime, "Reward (IRL)", cmap=plt.cm.Blues)
+    plot_grid_map(Rprime, "Reward (IRL)", print_values=True, cmap=plt.cm.Blues)
     plt.show()
 
 

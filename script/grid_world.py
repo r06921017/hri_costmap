@@ -218,7 +218,8 @@ class GridWorld(gym.Env):
                 R[s] += -10
             # human proximity penalty
             s_pos = self._state2pos(s)
-            if np.linalg.norm(s_pos - self.human_pos) < self.human_radius:
+            if (self.human_pos is not None and
+                np.linalg.norm(s_pos - self.human_pos) < self.human_radius):
                 R[s] += -10
         # goal reward
         R[self.goal_state] = 10
@@ -266,3 +267,10 @@ class GridWorld(gym.Env):
     def _valid_pos(self, coords):
         return (coords[0] >= 0 and coords[0] < self.grid.shape[0] and
                 coords[1] >= 0 and coords[1] < self.grid.shape[1])
+
+    def _feature_map(self, state):
+        max_dist = np.linalg.norm(self.init_pos - self.goal_pos)
+        dist_goal = -np.linalg.norm(self.goal_pos - self._state2pos(state)) / max_dist
+        dist_human = np.linalg.norm(self.human_pos - self._state2pos(state)) / max_dist
+
+        return [dist_goal, dist_human]

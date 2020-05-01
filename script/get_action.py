@@ -14,7 +14,7 @@ def readFile(f_name):
         exit(1)
 
 if __name__ == '__main__':
-    file_name = '/home/rdaneel/hri_costmap_traj/S032C003P105R002A107.csv'
+    file_name = '/home/rdaneel/hri_costmap_traj/S032C002P067R002A107.csv'
     traj_df = readFile(file_name)
 
     pre_row = pd.Series()
@@ -32,4 +32,4 @@ if __name__ == '__main__':
             traj_df.loc[idx, 'az2'] = np.around(row['z2']-pre_row['z2'], 2)
             pre_row = row
             
-    traj_df.to_csv('/home/rdaneel/hri_costmap_traj/actions/S032C003P105R002A107.csv')
+    traj_df.to_csv('/home/rdaneel/hri_costmap_traj/actions/S032C002P067R002A107_action.csv')

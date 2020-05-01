@@ -269,8 +269,6 @@ class GridWorld(gym.Env):
                 coords[1] >= 0 and coords[1] < self.grid.shape[1])
 
     def _feature_map(self, state):
-        max_dist = np.linalg.norm(self.init_pos - self.goal_pos)
-        dist_goal = -np.linalg.norm(self.goal_pos - self._state2pos(state)) / max_dist
-        dist_human = np.linalg.norm(self.human_pos - self._state2pos(state)) / max_dist
-
-        return [dist_goal, dist_human]
+        feat = np.zeros(self.observation_space().n)
+        feat[state] = 1
+        return feat

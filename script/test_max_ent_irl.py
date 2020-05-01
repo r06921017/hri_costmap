@@ -15,14 +15,14 @@ def test_gridworld_maxent_irl():
     np.random.seed(0)
 
     # env
-    N = 5
+    N = 6
     grid = np.zeros((N, N), dtype=int)
     # grid[:N-1, N-1] = 1  # Add obstacles
     env = GridWorld(
         init_pos=(0, 0),
         goal_pos=(N-1, N-1),
-        human_pos=(N-1, 0),
-        human_radius=2.5,
+        human_pos=(3, 3),
+        human_radius=1.5,
         grid=grid,
         action_success_rate=1,
         render=False,
@@ -38,8 +38,8 @@ def test_gridworld_maxent_irl():
 
     V = np.asarray(vi.V).reshape((N, N)).T
     R = env.R.reshape((N, N)).T
-    # plot_grid_map(R, "Reward Function", cmap=plt.cm.Reds)
-    # plot_grid_map(V, "Value Function", cmap=plt.cm.Blues)
+    plot_grid_map(R, "Reward Function", cmap=plt.cm.Reds)
+    plot_grid_map(V, "Value Function", cmap=plt.cm.Blues)
     # plot_policy(
     #     grid,
     #     policy,
@@ -48,7 +48,7 @@ def test_gridworld_maxent_irl():
     #     cmap=plt.cm.Blues)
     # plt.show()
 
-    num_trajectories = 200
+    num_trajectories = 500
     maxlen = 15
     dataset = Dataset(maxlen=maxlen)
 
@@ -70,6 +70,14 @@ def test_gridworld_maxent_irl():
             obs = next_obs
 
         dataset.append(t)
+
+    dataset_state_dist = np.zeros(env.observation_space().n)
+    for t in dataset:
+        for trans in t:
+            dataset_state_dist[trans.obs] += 1
+    dataset_density = dataset_state_dist.reshape((N, N)).T / np.sum(dataset_state_dist)
+    plot_grid_map(dataset_density, "Dataset State Distribution")
+    # plt.show()
 
     # phi
     phi = [env._feature_map(s) for s in range(env.observation_space().n)]

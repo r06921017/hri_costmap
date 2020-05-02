@@ -18,7 +18,6 @@ class MaxEntIRL:
                  goal_states,
                  dataset,
                  feature_map,
-                 init_weight_var=1.,
                  max_iter=10,
                  eps=0.01,
                  lr=0.1,
@@ -26,12 +25,11 @@ class MaxEntIRL:
         '''
         :param observation_space: gym.spaces.Discrete object
         :param action_space: gym.spaces.Discrete object
-        :param transition: transition function, implemented as a callable
-            T(s, a, s') -> prob or matrix T[a][s, s'] -> prob
+        :param transition: transition function, implemented as matrix
+            T[a][s, s'] -> prob
         :param goal_states: list of goal states
         :param dataset: Dataset object of demonstration trajectories
         :param feature_map: feature map of size SxD
-        :param init_weight_var: variance of learned weights initialization
         :param max_iter: maximum number of training iterations
         :param eps: stopping critereon
         :param lr: learning rate of optimizer
@@ -39,10 +37,7 @@ class MaxEntIRL:
         # env information
         self.observation_space = observation_space
         self.action_space = action_space
-        if callable(transition):
-            self.transition = transition
-        else:
-            self.transition = lambda s, a, sprime: transition[a][s, sprime]
+        self.transition = transition
         self.goal_states = goal_states
 
         # irl information
@@ -50,7 +45,6 @@ class MaxEntIRL:
         self.feature_map = feature_map
 
         # hyperparameters
-        self.init_weight_var = init_weight_var
         self.max_iter = max_iter
         self.eps = eps
         self.lr = lr
@@ -84,9 +78,7 @@ class MaxEntIRL:
         return self.feature_map.dot(self.weights)
 
     def _init_feature_weights(self):
-        D = self.feature_map.shape[1]
-        weights = np.random.normal(
-            loc=0., scale=np.sqrt(self.init_weight_var), size=(D, 1))
+        weights = np.ones((self.feature_map.shape[1], 1))
         return weights
 
     def _initial_state_probability(self):
@@ -111,32 +103,27 @@ class MaxEntIRL:
         T = self.transition
 
         # Backward pass: compute state partition
-        s_part = np.zeros(S, dtype=np.float)
-        a_part = np.zeros((S, A), dtype=np.float)
+        exp_feat_rew = np.exp(feat_rew).flatten()
+        s_part = np.zeros((S,), dtype=np.float64)
+        a_part = np.zeros((S, A), dtype=np.float64)
         s_part[self.goal_states] = 1.
 
         for i in range(2 * H):
             a_part[:] = 0.
-
-            for s, a, sprime in product(range(S), range(A), range(S)):
-                a_part[s, a] += (T(s, a, sprime) *
-                                 np.exp(feat_rew[s]) *
-                                 s_part[sprime])
+            for a in range(A):
+                a_part[:, a] = T[a].dot(s_part) * exp_feat_rew
             s_part = np.sum(a_part, axis=1)
 
         # Local action probability
         local_a_prob = a_part / s_part.reshape((-1, 1))
 
         # Forward pass: compute svf
-        nongoal_states = [s for s in range(S) if s not in self.goal_states]
-        stvf = np.zeros((S, 2 * H), dtype=np.float)
-        stvf[:, 0] = init_prob
+        svf = np.zeros((S,), dtype=np.float64)
+        savf = np.zeros((S, A), dtype=np.float64)
 
         for i in range(1, 2 * H):
-            for s, a, sprime in product(nongoal_states, range(A), range(S)):
-                stvf[sprime, i] += (stvf[s, i-1] *
-                                   local_a_prob[s, a] *
-                                   T(s, a, sprime))
+            for a in range(A):
+                savf[:, a] = T[a].T.dot(local_a_prob[:, a] * svf)
+            svf = init_prob + np.sum(savf, axis=1)
 
-        svf = np.sum(stvf, axis=1)
         return svf

@@ -15,14 +15,14 @@ def test_gridworld_maxent_irl():
     np.random.seed(0)
 
     # env
-    N = 6
+    N = 8
     grid = np.zeros((N, N), dtype=int)
     # grid[:N-1, N-1] = 1  # Add obstacles
     env = GridWorld(
         init_pos=(0, 0),
         goal_pos=(N-1, N-1),
         human_pos=(3, 3),
-        human_radius=1.5,
+        human_radius=2,
         grid=grid,
         action_success_rate=1,
         render=False,
@@ -76,7 +76,7 @@ def test_gridworld_maxent_irl():
         for trans in t:
             dataset_state_dist[trans.obs] += 1
     dataset_density = dataset_state_dist.reshape((N, N)).T / np.sum(dataset_state_dist)
-    plot_grid_map(dataset_density, "Dataset State Distribution")
+    plot_grid_map(dataset_density, "Dataset State Distribution", print_values=True)
     # plt.show()
 
     # phi
@@ -97,8 +97,6 @@ def test_gridworld_maxent_irl():
     Rprime = Rprime.reshape((N, N)).T
 
     # plot results
-
-    plot_grid_map(R, "Reward (Ground Truth)", cmap=plt.cm.Reds)
     plot_grid_map(Rprime, "Reward (IRL)", print_values=True, cmap=plt.cm.Blues)
     plt.show()
 

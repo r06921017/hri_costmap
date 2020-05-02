@@ -262,6 +262,12 @@ class GridWorld(gym.Env):
                         else:
                             T[a][s, n] = fail_prob
 
+        # block transitions out of goal state
+        frozen_sprime_prob = np.zeros((self.observation_space().n,))
+        frozen_sprime_prob[self.goal_state] = 1
+        for a in range(self.action_space().n):
+            T[a][self.goal_state, :] = frozen_sprime_prob
+
         return T
 
     def _valid_pos(self, coords):

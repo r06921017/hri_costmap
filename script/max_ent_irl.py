@@ -1,11 +1,6 @@
 from itertools import product
 
-import matplotlib.pyplot as plt
-from mdptoolbox.mdp import ValueIteration
 import numpy as np
-
-from dataset import Dataset, transition
-from grid_world import GridWorld
 
 
 class MaxEntIRL:
@@ -64,7 +59,7 @@ class MaxEntIRL:
             grad = self.feat_exp - self.feature_map.T.dot(svf_exp)
             
             # optimize
-            # TODO: break out optimization to separate class
+            # TODO: move optimization to separate class
             np.copyto(dst=self.prev_weights, src=self.weights)
             self.weights *= np.exp(self.lr * grad).reshape((-1, 1))
             self.lr *= self.anneal_rate

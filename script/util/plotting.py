@@ -48,4 +48,5 @@ def plot_policy(grid, policy, title, values=None, cmap=plt.cm.Blues):
     return fig
 
 def plot_q_function(Q, title):
+    # TODO: use plt.triplot()
     pass

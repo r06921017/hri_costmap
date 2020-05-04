@@ -120,9 +120,14 @@ int main(int argc, char** argv)
                     geometry_msgs::PoseStamped tmp_joint;
                     tmp_joint.header.stamp = now;
                     tmp_joint.header.frame_id = tar_tf;
-                    tmp_joint.pose.position.x = floor((body_tfs[joint_id].getOrigin().x() * 10) + .5) / 10;
-                    tmp_joint.pose.position.y = floor((body_tfs[joint_id].getOrigin().y() * 10) + .5) / 10;
-                    tmp_joint.pose.position.z = floor((body_tfs[joint_id].getOrigin().z() * 10) + .5) / 10;
+                    // tmp_joint.pose.position.x = floor((body_tfs[joint_id].getOrigin().x() * 10) + .5) / 10;
+                    // tmp_joint.pose.position.y = floor((body_tfs[joint_id].getOrigin().y() * 10) + .5) / 10;
+                    // tmp_joint.pose.position.z = floor((body_tfs[joint_id].getOrigin().z() * 10) + .5) / 10;
+
+                    tmp_joint.pose.position.x = body_tfs[joint_id].getOrigin().x();
+                    tmp_joint.pose.position.y = body_tfs[joint_id].getOrigin().y();
+                    tmp_joint.pose.position.z = body_tfs[joint_id].getOrigin().z();
+                    
                     tmp_joint.pose.orientation.x = 0.0;
                     tmp_joint.pose.orientation.y = 0.0;
                     tmp_joint.pose.orientation.z = 0.0;

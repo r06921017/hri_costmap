@@ -157,7 +157,7 @@ int main(int argc, char** argv)
 
 						body_transforms[body_num*25 + joint_num].header.stamp = t;
 						
-						// ROS_INFO("TRACKING JOINT %d of SKELETON %d in FRAME %d as %.3f %.3f %.3f %.3f %.3f %.3f %.3f",joint_num, body_num, frame, x, y, z, orientationX, orientationY, orientationZ, orientationW);
+						ROS_INFO("TRACKING JOINT %d of SKELETON %d in FRAME %d as %.3f %.3f %.3f %.3f %.3f %.3f %.3f",joint_num, body_num, frame, x, y, z, orientationX, orientationY, orientationZ, orientationW);
 					}
 				}
 			}

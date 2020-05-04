@@ -24,91 +24,49 @@ class CostmapIRL:
             self.dp_list.append(pd.read_csv(self.csv_path + _fin))
             self.file_name.append(_fin)
         
-        for _dp in self.dp_list:
-            # get position of last row
-            self.goal_pos1 = [_dp['x1'].tolist()[-1], _dp['y1'].tolist()[-1], _dp['z1'].tolist()[-1]]
-            self.goal_pos2 = [_dp['x2'].tolist()[-1], _dp['y2'].tolist()[-1], _dp['z2'].tolist()[-1]]
-
-            if relative2goal:
-                # position relative to the goal
-                _dp['x1'] -= self.goal_pos2[0]
-                _dp['y1'] -= self.goal_pos2[1]
-                _dp['z1'] -= self.goal_pos2[2]
-
-                _dp['x2'] -= self.goal_pos2[0]
-                _dp['y2'] -= self.goal_pos2[1]
-                _dp['z2'] -= self.goal_pos2[2]
-
         # Get the maximum position among all demos
-        tmp_x = list()
-        tmp_y = list()
-        tmp_z = list()
+        tmp_f1 = list()
+        tmp_f2 = list()
+        tmp_a1 = list()
+        tmp_a2 = list()
         for _dp in self.dp_list:
-            tmp_x.append(np.around(max(max(_dp['x1'].tolist()), max(_dp['x2'].tolist())), 1))
-            tmp_y.append(np.around(max(max(_dp['y1'].tolist()), max(_dp['y2'].tolist())), 1))
-            tmp_z.append(np.around(max(max(_dp['z1'].tolist()), max(_dp['z2'].tolist())), 1))
+            tmp_f1.append(np.nanmax(_dp['f1'].tolist()))
+            tmp_f2.append(np.nanmax(_dp['f2'].tolist()))
+            tmp_a1.append(np.nanmax(_dp['a1'].tolist()))
+            tmp_a2.append(np.nanmax(_dp['a2'].tolist()))
 
-        self.max_x = max(tmp_x)
-        self.max_y = max(tmp_y)
-        self.max_z = max(tmp_z)
+        self.max_f1 = np.around(np.nanmax(tmp_f1), 1)
+        self.max_f2 = np.around(np.nanmax(tmp_f2), 1)
+        self.max_a1 = np.around(np.nanmax(tmp_a1), 1)
+        self.max_a2 = np.around(np.nanmax(tmp_a2), 1)
 
         # Get the minimum position among all demos
-        tmp_x = list()
-        tmp_y = list()
-        tmp_z = list()
+        tmp_f1 = list()
+        tmp_f2 = list()
+        tmp_a1 = list()
+        tmp_a2 = list()
         for _dp in self.dp_list:
-            tmp_x.append(np.around(min(min(_dp['x1'].tolist()), min(_dp['x2'].tolist())), 1))
-            tmp_y.append(np.around(min(min(_dp['y1'].tolist()), min(_dp['y2'].tolist())), 1))
-            tmp_z.append(np.around(min(min(_dp['z1'].tolist()), min(_dp['z2'].tolist())), 1))
+            tmp_f1.append(np.nanmin(_dp['f1'].tolist()))
+            tmp_f2.append(np.nanmin(_dp['f2'].tolist()))
+            tmp_a1.append(np.nanmin(_dp['a1'].tolist()))
+            tmp_a2.append(np.nanmin(_dp['a2'].tolist()))
 
-        self.min_x = min(tmp_x)
-        self.min_y = min(tmp_y)
-        self.min_z = min(tmp_z)
+        self.min_f1 = np.around(np.nanmin(tmp_f1),1)
+        self.min_f2 = np.around(np.nanmin(tmp_f2),1)
+        self.min_a1 = np.around(np.nanmin(tmp_a1),1)
+        self.min_a2 = np.around(np.nanmin(tmp_a2),1)
 
-        print('max: ({0}, {1}, {2})'.format(self.max_x, self.max_y, self.max_z))
-        print('min: ({0}, {1}, {2})'.format(self.min_x, self.min_y, self.min_z))
-
-        self.x_length = np.around(self.max_x - self.min_x, 1)
-        self.y_length = np.around(self.max_y - self.min_y, 1)
-        self.z_length = np.around(self.max_z - self.min_z, 1)
+        print('max: ({0}, {1}, {2}, {3})'.format(self.max_f1, self.max_f2, self.max_a1, self.max_a2))
+        print('min: ({0}, {1}, {2}, {3})'.format(self.min_f1, self.min_f2, self.min_a1, self.min_a2))
 
         # viewing manhattan distance of robot to goal and robot to human as states
-        self.state_size = int(np.around(((self.x_length + self.y_length + self.z_length)*10) ** 2))
+        self.state_size = int(np.around((self.max_f1-self.min_f1)*(self.max_f2-self.min_f2)*100))
         print('state space size: {0}'.format(self.state_size))
 
-        self.action_idx = {
-            (0, 0, 0): 0,
-            (0.1, 0, 0): 1,
-            (-0.1, 0, 0): 2,
-            (0, 0.1, 0): 3,
-            (0, -0.1, 0): 4,
-            (0, 0, 0.1): 5,
-            (0, 0, -0.1): 6,
+        self.action_idx = {}
+        for i, action in enumerate(np.arange(min(self.min_a1, self.min_a2), max(self.max_a1, self.max_a2) + 0.1, 0.1)):
+            self.action_idx[i] = np.around(action, 1)
 
-            (0.1, 0.1, 0): 7,
-            (-0.1, 0.1, 0): 8,
-            (0.1, -0.1, 0): 9,
-            (-0.1, -0.1, 0): 10,
-            
-            (0.1, 0, 0.1): 11,
-            (-0.1, 0, 0.1): 12,
-            (0.1, 0, -0.1): 13,
-            (-0.1, 0, -0.1): 14,
-
-            (0, 0.1, 0.1): 15,
-            (0, -0.1, 0.1): 16,
-            (0, 0.1, -0.1): 17,
-            (0, -0.1, -0.1): 18,
-
-            (0.1, 0.1, 0.1): 19,
-            (-0.1, 0.1, 0.1): 20,
-            (0.1, -0.1, 0.1): 21,
-            (-0.1, -0.1, 0.1): 22,
-            (0.1, 0.1, -0.1): 23,
-            (-0.1, 0.1, -0.1): 24,
-            (0.1, -0.1, -0.1): 25,
-            (-0.1, -0.1, -0.1): 26
-        }
         self.inv_action_idx = {_tmp_v: _tmp_k for _tmp_k, _tmp_v in self.action_idx.items()}
 
     def jointAction2Idx(self, h_act, r_act):

@@ -29,7 +29,9 @@ class CostmapIRL:
         tmp_f2 = list()
         tmp_a1 = list()
         tmp_a2 = list()
-        for _dp in self.dp_list:
+        for i, _dp in enumerate(self.dp_list):
+            print(self.file_name[i])
+            # print(_dp)
             tmp_f1.append(np.nanmax(_dp['f1'].tolist()))
             tmp_f2.append(np.nanmax(_dp['f2'].tolist()))
             tmp_a1.append(np.nanmax(_dp['a1'].tolist()))

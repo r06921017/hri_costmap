@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 import numpy as np
-
+from tqdm import trange
 
 # MDP transition
 transition = namedtuple('transition', ('obs', 'act', 'next_obs', 'rew'))
@@ -51,3 +51,4 @@ def collect_trajectories(policy,
         dataset.append(t)
 
     return dataset
+

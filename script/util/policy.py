@@ -85,8 +85,12 @@ class StochasticGreedyPolicy(Policy):
                 act_value = np.sum(self.V * sprime_dist)
                 act_value_exp.append(act_value)
             act_value_exp = np.array(act_value_exp)
-            act_prob = act_value_exp - np.min(act_value_exp)
-            act_prob /= np.sum(act_prob)
+            value_exp = act_value_exp - np.min(act_value_exp)
+
+            if np.sum(value_exp) == 0:
+                act_prob = np.ones(self.action_space.n) / self.action_space.n
+            else:
+                act_prob = value_exp / np.sum(value_exp)
 
             self.pi[s, :] = act_prob
 

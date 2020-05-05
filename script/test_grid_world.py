@@ -41,7 +41,7 @@ def test_gridworld_value_iteration():
 
     plot_grid_map(R, "Reward", cmap=plt.cm.Reds)
     plot_grid_map(V, "Value Function", cmap=plt.cm.Blues)
-    plot_policy(grid, policy, "Policy", values=V, cmap=plt.cm.Blues)
+    plot_policy(policy, (N, N), "Policy", values=V, cmap=plt.cm.Blues)
     plt.show()
 
     obs, rew, done, info = env.reset()

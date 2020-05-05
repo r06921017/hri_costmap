@@ -67,6 +67,11 @@ class GridWorld(gym.Env):
             self.human_pos = None
         self.action_success_rate = action_success_rate
 
+        # pygame values
+        self.do_render = render
+        self.cell_size = cell_size_px
+        self.margin_size = cell_margin_px
+
         # sanity check
         assert self.N > 0 and self.M > 0
         if self.init_pos.shape == (2,):
@@ -74,7 +79,7 @@ class GridWorld(gym.Env):
             assert self._valid_pos(self.init_pos)
         else:
             # probability distribution
-            assert (self.init_pos.shape == (N, M) and
+            assert (self.init_pos.shape == (self.N, self.M) and
                     np.sum(init_pos) == 1 and
                     np.all(init_pos) >= 0)
         assert np.all(self._valid_pos_vec(self.goal_pos))
@@ -84,15 +89,11 @@ class GridWorld(gym.Env):
         assert self.action_success_rate >= 0 and self.action_success_rate <= 1
 
         # game state
-        self.agent_state = self._pos2state(self.init_pos)
         self.goal_states = self._pos2state_vec(self.goal_pos)
         self.transition = self._construct_transition_fn()
+        self.reset()
 
         # pygame
-        self.do_render = render
-        self.cell_size = cell_size_px
-        self.margin_size = cell_margin_px
-
         if self.do_render:
             pygame.init()
             screen_width_px = ((self.cell_size + self.margin_size) * self.N +

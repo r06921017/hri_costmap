@@ -73,18 +73,18 @@ class MaxEntIRL:
         return self.feature_map.dot(self.weights)
 
     def _init_feature_weights(self):
-        weights = np.ones((self.feature_map.shape[1], 1))
+        weights = np.ones((self.feature_map.shape[1], 1), dtype=float)
         return weights
 
     def _initial_state_probability(self):
-        prob = np.zeros(self.observation_space.n, dtype=np.float)
+        prob = np.zeros(self.observation_space.n, dtype=float)
         for traj in self.dataset:
             prob[traj[0].obs] += 1
         prob = prob / len(self.dataset)
         return prob
 
     def _init_feature_expectations(self):
-        feat_exp = np.zeros(self.feature_map.shape[1], dtype=np.float)
+        feat_exp = np.zeros(self.feature_map.shape[1], dtype=float)
         for traj in self.dataset:
             for trans in traj:
                 feat_exp += self.feature_map[trans.obs, :]
@@ -99,8 +99,8 @@ class MaxEntIRL:
 
         # Backward pass: compute state partition
         exp_feat_rew = np.exp(feat_rew).flatten()
-        s_part = np.zeros((S,), dtype=np.float64)
-        a_part = np.zeros((S, A), dtype=np.float64)
+        s_part = np.zeros((S,), dtype=float)
+        a_part = np.zeros((S, A), dtype=float)
         s_part[self.goal_states] = 1.
 
         for i in range(2 * H):
@@ -113,8 +113,8 @@ class MaxEntIRL:
         local_a_prob = a_part / s_part.reshape((-1, 1))
 
         # Forward pass: compute svf
-        svf = np.zeros((S,), dtype=np.float64)
-        savf = np.zeros((S, A), dtype=np.float64)
+        svf = np.zeros((S,), dtype=float)
+        savf = np.zeros((S, A), dtype=float)
 
         for i in range(1, 2 * H):
             for a in range(A):

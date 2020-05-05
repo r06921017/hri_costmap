@@ -23,7 +23,7 @@ def plot_grid_map(data, title, print_values=False, cmap='bone'):
 
     return fig
 
-def plot_policy(grid, policy, title, values=None, cmap=plt.cm.Blues):
+def plot_policy(policy, dims, title, values=None, cmap='bone'):
     arrows = [
         u'→',
         u'←',
@@ -32,21 +32,35 @@ def plot_policy(grid, policy, title, values=None, cmap=plt.cm.Blues):
     ]
 
     if values is None:
-        values = np.zeros_like(grid)
+        values = np.zeros(dims)
 
     fig, ax = plt.subplots(
         subplot_kw={'xticklabels': [], 'yticklabels': []})
 
     ax.matshow(values, cmap=cmap)
-    for i in range(grid.shape[0]):
-        for j in range(grid.shape[1]):
-            act = policy.get_action(np.ravel_multi_index([j, i], grid.shape))
+    for i in range(dims[0]):
+        for j in range(dims[1]):
+            act = policy.get_action(np.ravel_multi_index([j, i], dims))
             arrow = arrows[act]
             ax.text(j, i, arrow, ha='center', va='center', color='r')
     ax.set_title(title)
 
     return fig
 
-def plot_q_function(Q, title):
+def plot_q_function():
     # TODO: use plt.triplot()
     pass
+
+def plot_dataset_distribution(dataset, dims, title, normalize=False, cmap='bone'):
+    dataset_density = np.zeros(dims[0] * dims[1])
+
+    for t in dataset:
+        for trans in t:
+            dataset_density[trans.obs] += 1
+    
+    if normalize:
+        dataset_density /= np.sum(dataset_density)
+    dataset_density = dataset_density.reshape(dims).T
+
+    fig = plot_grid_map(dataset_density, title, cmap=cmap)
+    return fig

@@ -17,9 +17,9 @@ def test_gridworld_maxent_irl():
 
     # env
     N = 10
-    goal_pos = np.array([[N-1, N-1]])
-    human_pos = np.array([[3, 3]])
-    human_radius = 2
+    goal_pos = np.array([[N-1, N-1], [N-1, N-2], [N-1, N-3], [N-1, N-4], [N-1, N-5]])
+    human_pos = np.array([[N//2, N//2]])
+    human_radius = 3
 
     grid = np.zeros((N, N), dtype=float)
     grid = construct_goal_reward(grid, goal_pos, 10)
@@ -28,11 +28,11 @@ def test_gridworld_maxent_irl():
     env = GridWorld(
         dimensions=(N, N),
         init_pos=(0, 0),
-        goal_pos=(N-1, N-1),
+        goal_pos=goal_pos,
         reward_grid=grid,
-        human_pos=(3, 3),
+        human_pos=human_pos,
         action_success_rate=1,
-        render=False,
+        render=True,
     )
 
     # learn a policy
@@ -52,8 +52,8 @@ def test_gridworld_maxent_irl():
     dataset = collect_trajectories(
         policy=policy,
         env=env,
-        num_trajectories=200,
-        maxlen=15)
+        num_trajectories=20,
+        maxlen=30)
 
     dataset_state_dist = np.zeros(env.observation_space().n)
     for t in dataset:

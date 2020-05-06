@@ -151,5 +151,5 @@ def test_feature_gridworld_maxent_irl():
 
 
 if __name__ == '__main__':
-    test_gridworld_maxent_irl()
+    # test_gridworld_maxent_irl()
     test_feature_gridworld_maxent_irl()

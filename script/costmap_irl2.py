@@ -12,7 +12,7 @@ from collections import namedtuple
 from scipy.sparse import csr_matrix
 
 from max_ent_irl import MaxEntIRL
-from util.plotting import plot_grid_map, plot_policy
+from util.plotting import plot_grid_map, plot_policy, plot_dataset_distribution
 from util.reward import construct_goal_reward, construct_human_radius_reward
 from util.dataset import Dataset, transition
 
@@ -20,6 +20,7 @@ from util.dataset import Dataset, transition
 class CostmapIRL:
     def __init__(self):
         self.csv_path = '/home/rdaneel/hri_costmap_traj/actions/'
+        self.action_success_rate = 1.0
         self.df_list = list()
         self.file_name = list()
         self.goal_states = list()
@@ -82,8 +83,7 @@ class CostmapIRL:
         print('min: ({0}, {1}, {2}, {3})'.format(self.min_f1, self.min_f2, self.min_a1, self.min_a2))
 
         # Get goal positions
-        self.goal_states = np.array([self._pos2state(np.around(_f1, 1), 0.0) 
-            for _f1 in np.arange(self.min_f1, self.max_f1+0.05, 0.1)])
+        self.goal_states = []
 
         # viewing manhattan distance of robot to goal and robot to human as states
         self.state_size = self.f1_length * self.f2_length
@@ -99,50 +99,48 @@ class CostmapIRL:
 
         S, A = self.observation_space().n, self.action_space().n
         self.T = [csr_matrix((S, S), dtype=np.float) for _ in range(A)]
-        
+
     
+    def _valid_pos(self, in_state):
+        return in_state[0] in self.f1_idx.values() and in_state[1] in self.f2_idx.values()
+
     def _construct_transition_fn(self):
         # T[a][s, s'] implemented as a length |A| list of sparse SxS matrices
         S, A = self.observation_space().n, self.action_space().n
         T = [csr_matrix((S, S), dtype=np.float) for _ in range(A)]
-        
-        # for i in range(self.f1_length):
-        #     for j in range(self.f2_length):
-        #         for a, delta in enumerate(GridWorld.action2delta):
-        #             # state data
-        #             s_pos = np.array([i, j])
-        #             s = self._pos2state(s_pos)
 
-        #             # get valid neighbors (current state is also valid)
-        #             neighbors = [s_pos + d for d in
-        #                 GridWorld.action2delta + [[0, 0]]]
-        #             valid_neighbors = [self._pos2state(n) for n in neighbors
-        #                 if self._valid_pos(n)]
+        for i in self.f1_idx.keys():
+            for j in self.f2_idx.keys():
+                cur_s = [self.f1_idx[i], self.f2_idx[j]]
+                next_sid = list()
+                for a_id in self.action_idx.keys():
+                    is_val = True
+                    neighbor = [cur_s[0] + self.action_idx[a_id][0], cur_s[1] + self.action_idx[a_id][1]]
+                    if not self._valid_pos(neighbor):  # not valid
+                        is_val = False
+                        neighbor = cur_s
 
-        #             # if sprime_pos is not valid, clip to current state
-        #             sprime_pos = s_pos + delta
-        #             if self._valid_pos(sprime_pos):
-        #                 success_state = self._pos2state(sprime_pos)
-        #             else:
-        #                 success_state = s
+                    # add (action, next state, is_valid)
+                    next_sid.append((a_id, self._pos2state(neighbor[0], neighbor[1]), is_val))
 
-        #             # uniform weighting of all other valid transitions
-        #             fail_prob = (1 - self.action_success_rate)
-        #             if len(valid_neighbors) > 1:
-        #                 fail_prob /= len(valid_neighbors) - 1
+                # uniform weighting of all other valid transitions
+                fail_prob = (1.0 - self.action_success_rate)
+                if len(next_sid) > 0:
+                    fail_prob /= len(next_sid) - 1
 
-        #             for n in valid_neighbors:
-        #                 if n == success_state:
-        #                     T[a][s, success_state] = self.action_success_rate
-        #                 else:
-        #                     T[a][s, n] = fail_prob
+                for _ns in next_sid:
+                    if _ns[2]:
+                        T[_ns[0]][self._pos2state(cur_s[0], cur_s[1]), _ns[1]] = self.action_success_rate
 
-        # # block transitions out of goal states
-        # for goal_state in self.goal_states:
-        #     sprime_prob = np.zeros((S,))
-        #     sprime_prob[goal_state] = 1
-        #     for a in range(self.action_space().n):
-        #         T[a][goal_state, :] = sprime_prob
+                    else:
+                        T[_ns[0]][self._pos2state(cur_s[0], cur_s[1]), _ns[1]] = fail_prob
+
+        # Block transition out of goal positions
+        for goal_state in self.goal_states:
+            sprime_prob = np.zeros((S,))
+            sprime_prob[goal_state] = 1
+            for a in self.action_idx.keys():
+                T[a][goal_state, :] = sprime_prob
 
         return T
 
@@ -196,26 +194,49 @@ class CostmapIRL:
                     next_obs=self._pos2state(np.around(_df['f1'][idx+1], 1), np.around(_df['f2'][idx+1], 1)),
                     rew=1.0))
             dataset.append(t)
+        
+            self.goal_states.append(self._pos2state(np.around(_df['f1'][_df.shape[0]-1], 1), 
+                                                    np.around(_df['f2'][_df.shape[0]-1], 1)))
+
         return dataset
                 
+    def get_boundary(self, RMatrix):
+        diff = np.zeros(RMatrix.shape[1])
+        for i in range(1, RMatrix.shape[1]):
+            print('R[{0}] = {1}'.format(i, RMatrix[1, i]))
+            diff[i] = abs(RMatrix[1, i] - RMatrix[1, i-1])
+
+        print(diff)
+        return np.argmax(diff)
 
     def main(self):
+        np.random.seed(0)
+        
         # phi
         phi = [self._feature_map(s) for s in range(self.observation_space().n)]
         phi = np.array(phi)
+
+        print('Collect dataset ...')
+        in_dataset = self.collect_demo()
+        plot_dataset_distribution(in_dataset, (self.f1_length, self.f2_length), "Dataset State Distribution")
 
         # IRL
         me_irl = MaxEntIRL(
             observation_space=self.observation_space(),
             action_space=self.action_space(),
-            transition=self._transition,
+            transition=self._construct_transition_fn(),
             goal_states=self.goal_states,
-            dataset=self.collect_demo(),
+            dataset= in_dataset,
             feature_map=phi,
             max_iter=10,
             anneal_rate=0.9)
+
+        print('Start training ...')
         Rprime = me_irl.train()
         Rprime = Rprime.reshape((self.f1_length, self.f2_length)).T
+
+        print('Boundary index = ', self.get_boundary(Rprime))
+        print('Radius = ', self.f1_idx[self.get_boundary(Rprime)])
 
         # plot results
         plot_grid_map(Rprime, "Reward (IRL)", print_values=True, cmap=plt.cm.Blues)

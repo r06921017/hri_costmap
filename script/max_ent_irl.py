@@ -99,8 +99,8 @@ class MaxEntIRL:
 
         # Backward pass: compute state partition
         exp_feat_rew = np.exp(feat_rew).flatten()
-        s_part = np.zeros((S,), dtype=float)
-        a_part = np.zeros((S, A), dtype=float)
+        s_part = np.zeros((S,), dtype=np.longdouble)
+        a_part = np.zeros((S, A), dtype=np.longdouble)
         s_part[self.goal_states] = 1.
 
         for i in range(2 * H):

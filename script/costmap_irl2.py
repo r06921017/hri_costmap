@@ -228,7 +228,7 @@ class CostmapIRL:
             goal_states=self.goal_states,
             dataset= in_dataset,
             feature_map=phi,
-            max_iter=10,
+            max_iter=20,
             anneal_rate=0.9)
 
         print('Start training ...')

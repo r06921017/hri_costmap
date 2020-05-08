@@ -58,9 +58,10 @@ def test_gridworld_maxent_irl():
         maxlen=N*2)
     plot_dataset_distribution(dataset, (N, N), "Dataset State Distribution")
 
-    # phi
-    phi = [env._feature_map(s) for s in range(env.observation_space().n)]
-    phi = np.array(phi)
+    # feature map
+    feature_map = [env._feature_map(s)
+                   for s in range(env.observation_space().n)]
+    feature_map = np.array(feature_map)
 
     # IRL
     me_irl = MaxEntIRL(
@@ -69,7 +70,7 @@ def test_gridworld_maxent_irl():
         transition=env.transition,
         goal_states=env.goal_states,
         dataset=dataset,
-        feature_map=phi,
+        feature_map=feature_map,
         max_iter=10,
         lr=0.1,
         anneal_rate=0.9)
@@ -127,9 +128,10 @@ def test_feature_gridworld_maxent_irl():
         maxlen=N*2)
     plot_dataset_distribution(dataset, (N, N), "Dataset State Distribution")
 
-    # phi
-    phi = [env._feature_map(s) for s in range(env.observation_space().n)]
-    phi = np.array(phi)
+    # IRL feature map
+    feature_map = [env._feature_map(s)
+                   for s in range(env.observation_space().n)]
+    feature_map = np.array(feature_map)
 
     # IRL
     me_irl = MaxEntIRL(
@@ -138,7 +140,7 @@ def test_feature_gridworld_maxent_irl():
         transition=env.transition,
         goal_states=env.goal_states,
         dataset=dataset,
-        feature_map=phi,
+        feature_map=feature_map,
         max_iter=10,
         lr=0.1,
         anneal_rate=0.9)

@@ -31,7 +31,7 @@ def test_gridworld_value_iteration():
         action_success_rate=1,
         render=True,
     )
-    
+
     mdp_algo = value_iteration(env.transition, env.reward, gamma=0.99)
     policy = EpsGreedyPolicy(env.action_space(), mdp_algo)
 

@@ -1,10 +1,15 @@
-from itertools import product
-
 import numpy as np
 
 
 class MaxEntIRL:
-    '''Maxumum Entropy Inverse Reinforcement Learning.'''
+    '''
+    Maxumum Entropy Inverse Reinforcement Learning.
+
+    Based on Ziebart, et al. (2008).
+
+    Influence from Maximilian Luz's implementation at
+    https://github.com/qzed/irl-maxent.git
+    '''
 
     def __init__(self,
                  observation_space,
@@ -57,7 +62,7 @@ class MaxEntIRL:
             svf_exp = self._state_visitation_frequencies(
                 feature_rewards, self.init_prob)
             grad = self.feat_exp - self.feature_map.T.dot(svf_exp)
-            
+
             # optimize
             # TODO: move optimization to separate class
             np.copyto(dst=self.prev_weights, src=self.weights)
@@ -80,7 +85,7 @@ class MaxEntIRL:
         prob = np.zeros(self.observation_space.n, dtype=float)
         for traj in self.dataset:
             prob[traj[0].obs] += 1
-        prob = prob / len(self.dataset)
+        prob /= len(self.dataset)
         return prob
 
     def _init_feature_expectations(self):

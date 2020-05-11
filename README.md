@@ -1,10 +1,12 @@
-# nturgbd_skeleton
+# IRL for Human-Centered Costmaps
+
+## nturgbd_skeleton
 This package implements a TF broadcaster for publishing the skeleton data from the NTU RGB-D Dataset. 
 
-## Prerequisites
+### Prerequisites
 This codebase was developed and tested  on Ubuntu 18.04 with ROS melodic.
 
-## Running the node
+### Running the node
 After building this package in your workspace using `catkin_make`, run the below command
 ```bash
 roslaunch nturgbd_skeleton node.launch skeleton_filename:=<path to skeleton_file> camera_frame_id:=<your camera frame id>
@@ -14,3 +16,15 @@ If the `skeleton_filename` and `camera_frame_id` are omitted from the command, t
 You can visualize the joints as 
 - TFs in rviz or using the `view_frames` node from the tf package
 - a MarkerArray on the topic `/nturgbd_skeleton_viz`
+
+## IRL
+Python implementation of Max-Entropy Inverse Reinforcement Learning
+
+### Prerequisites
+All Python dependencies listed in provided Pipfile.
+
+### Running experiments
+```bash
+pipenv run python script/test_max_entropy_irl.py
+pipenv run python script/costmap_irl2.py
+```

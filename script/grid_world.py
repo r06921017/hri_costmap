@@ -18,7 +18,12 @@ class Colors:
 
 
 class GridWorld(gym.Env):
-    ''' Grid world with pygame rendering.'''
+    '''
+    Grid world (gym.Env compatible)
+
+    Supports probabilistic transitions, human obstacles, and rendering through
+    pygame.
+    '''
     feature2color = {
         'empty': Colors.WHITE,
         'goal': Colors.GREEN,
@@ -215,7 +220,7 @@ class GridWorld(gym.Env):
         # T[a][s, s'] implemented as a length |A| list of sparse SxS matrices
         S, A = self.observation_space().n, self.action_space().n
         T = [csr_matrix((S, S), dtype=np.float) for _ in range(A)]
-        
+
         for i in range(self.N):
             for j in range(self.M):
                 for a, delta in enumerate(GridWorld.action2delta):
